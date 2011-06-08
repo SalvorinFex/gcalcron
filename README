@@ -1,0 +1,201 @@
+
+
+--------------------------------------------------------------------------------
+                        GCALCRON v0.1 - DOCUMENTATION
+--------------------------------------------------------------------------------
+
+
+
+Copyright Patrick Spear 2008
+patrick@pfspear.net
+www.pfspear.net
+
+Please see the "Legal" section below for additional licensing information.
+
+
+-- Overview --
+
+This script allows you to control and schedule jobs on your system via Google Calendar.
+
+For more, see these webpages:
+http://www.pfspear,net/projects/gcalcron
+http://www.pfspear.net/posts/2008/10/a-proof-of-concept
+
+
+
+-- Usage --
+
+  gcalcron.py [-h] -u <username> -p <password> -c <automation cal ID> [-d 
+      <delimiter>] [-t path] [-v] [-s] [-o time string]
+
+ -h                  help
+ -u <username>       Google account username 
+ -p <password>       Google account password
+ -c <id>             Id of calendar to be checked
+ -d <delimiter>      override characters to delimit start & end commands
+ -t <path>           path prefix for commands
+ -v 	             verbose
+ -s                  safe mode: do not execute commands
+ -o <time string>    override system time (for testing purposes)
+
+The script is ideally used as a cron job.
+
+
+
+-- Setting up a Calendar --
+
+First, you need to create a calendar for gcalcron to check in on.  When logged 
+in to your Google Calendar, choose settings from the top right corner and select
+the "Calendars" tab.  Under "My Calendars", find and click "Create New
+Calendar".  Set it up as you would any other- but be sure not to share it.  You
+can call it what you like- name is not important.
+
+Once created, you'll be back at the "Calendars" tab.  Find and click on your 
+newly created calendar, which will take you to a screen showing the calendar's 
+details.  At the bottom, you'll see a section called "Calendar Address", and 
+within that section, there will be an email address with a long string of 
+letters and numbers at the domain group.calendars.google.com.  Copy and paste 
+that entire address to somewhere- we'll need it later.
+
+With that, your calendar should be all set up.
+
+
+
+-- Installing on your System -- 
+
+If you're on a Debian-based distro (Ubuntu users, that's you), an included
+script should set up everything need automatically.  Please note this is a
+dumb script made just to save you typing in commands, and it probably won't
+work on anything not Debian-based.  If something fails or you want something
+other than the default settings, read below for manual installation
+instructions.  They're pretty simple.
+
+To install, run this as root.  You'll need the calendar id from the step above.
+./setup.sh install
+
+
+
+-- Manual Installation --
+
+Use root powers where necessary.
+
+1) First, make sure that python in installed on your system.  I imagine most 
+distros come with it installed, but double check, because without it, nothing will 
+work.
+
+2) Next, we need to install Google Python API.  The following commands will get, 
+unzip and install that.
+wget http://gdata-python-client.googlecode.com/files/gdata.py-1.2.1.tar.gz
+tar -xvf gdata.py-1.2.1.tar.gz
+cd gdata.py-1.2.1
+python setup.py install
+cd ..
+rm -rf gdata.py-1.2.1 gdata.py-1.2.1.tar.gz
+
+
+3) Install the script simply by copying it to your usr/bin.
+cp gcalcron.py /usr/bin
+
+4) Finally, we make a cron entry to run the script.  In /etc/cron.d, create a 
+file called "gcalcron".  Open that file and add these two lines, filling in necessary 
+information where it's needed:
+# SHELL=/usr/bin/python
+*/30 * * * * root gcalcron.py -u [username] -p [password] -c [calendar id]  
+
+If /etc/cron.d doesn't exist, look up how to add cron jobs on your system.
+
+If you'd like to change to change how gcalcron will be run, just change the 
+options listed in your cron job setup.  As it is set up here, it will run
+quietly every half an hour with no prefix added to the commands.  
+
+Important!  Please be aware that your Google account password will be stored in
+plaintext in the gcalcron cron.d entry.  If you aren't the computer administrator,
+you may not want to install the script. 
+
+
+
+-- Uninstalling --
+
+No uninstall script is provided.  If you want to reverse the installation, just 
+remove the script from /usr/bin and delete the cron job file- you'll be right
+back where you started.  To uninstall the Google's API, see their docs.
+
+
+
+-- Using it --
+
+Now you're all set up.  To use the thing, all you have to do is create 
+events in your automation calendar.  When an event is created, choose to edit 
+the event and enter any commands you'd like to execute into the description.  
+When gcalcron checks in and sees an event for the current time, those commands 
+will be executed.
+
+You can list commands to be executed when the event ends by adding a line 
+containing "---".  Anything after that delimiter will be executed when gcalcron 
+checks and sees the event ending at the current time.  For example, if you could 
+get your computer to control your air conditioner, you can have one event called 
+"Air conditioning" that will turn the AC both on and off.  It might look 
+something like this:
+
+accontrol --on -t 18
+---
+accontrol --off
+
+How else could the script be used, if you take the time to hook things up to
+your system?
+
+- Controlling lights
+- Automatic backups
+- Opening of ports for remote access during work hours
+- Automatic shutdown of systems at certain times
+- Disarming of alarm when a guest is scheduled to arrive while you're away
+- And more
+
+And any of those things can be changed/administrated using Google Calendar 
+from anywhere you can get a net connection.
+
+
+
+-- Testing --
+
+To make sure that your system is set up properly before using it, follow this
+procedure to test.
+
+1) Create an event in your automation calendar for noon of the current day.
+2) Type "echo Success > /home/<yourusername>/gcalcrontest" in the event's description
+3) At the command line, type "gcalron.py -u <username> -p <password> -c <calendarID> -vo 12:00"
+
+If a file appears in your home directory called "gcalcrontest" and contains the 
+word "Success", you'll know that you are successfully connecting to Google 
+Calendar and can retrieve information.  You're all set.
+
+
+
+-- Legal --
+
+This script is distributed under the GPL v3.0.  It may be freely copied, 
+modified and distributed so long as any derivative works are also licenced
+under the GPU v3.0, as per this little blurb here:
+
+"This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>."
+   
+And just to reiterate: this script is made available as-is, with no guarantee.
+As author I take no responsibility for anything that may come about because
+of its use.
+
+If you do decide to improve or extend this script, I'd appreciate a mention
+for the concept, and if you could provide links back to the orginal project
+pages at www.pfspear.net/projects/gcalcron and www,pfspear.net/posts/10/a-
+proof-of-concept, I would appreciate it.
+
